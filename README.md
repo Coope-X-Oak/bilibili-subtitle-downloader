@@ -5,6 +5,10 @@
 
 一个用于批量下载Bilibili视频字幕的油猴脚本（UserScript）。支持多种格式（ASS, SRT, LRC, TXT, MD），提供紧凑的UI设计、多关键词筛选、WBI签名验证以及高并发下载支持。
 
+# 效果预览
+![alt text](image-1.png)
+![alt text](image.png)
+
 ## ✨ 主要功能
 
 - **批量下载**：自动获取并下载视频列表中的所有字幕。
