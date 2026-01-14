@@ -13,8 +13,8 @@
 // @grant        unsafeWindow
 // @connect      bilibili.com
 // @connect      hdslb.com
-// @downloadURL  https://github.com/Coope-X-Oak/bilibili-subtitle-downloader/raw/main/bilibili_subtitle_downloader.user.js
-// @updateURL    https://github.com/Coope-X-Oak/bilibili-subtitle-downloader/raw/main/bilibili_subtitle_downloader.user.js
+// @downloadURL  https://github.com/Cooper-X-Oak/bilibili-subtitle-downloader/raw/main/bilibili_subtitle_downloader.user.js
+// @updateURL    https://github.com/Cooper-X-Oak/bilibili-subtitle-downloader/raw/main/bilibili_subtitle_downloader.user.js
 // @license      MIT
 // ==/UserScript==
 
