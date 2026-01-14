@@ -225,10 +225,10 @@
         .bsd-video-item {
             display: flex;
             align-items: center;
-            padding: 4px 8px;
-            border-bottom: 1px solid #f9f9f9;
-            gap: 8px;
-            min-height: 28px;
+            padding: 1px 6px;
+            border-bottom: 1px solid #f0f0f0;
+            gap: 4px;
+            min-height: 20px;
             transition: background 0.2s;
         }
         .bsd-video-item:hover {
@@ -236,27 +236,29 @@
         }
         .bsd-video-item input[type="checkbox"] {
             margin: 0;
-            width: 14px;
-            height: 14px;
+            width: 12px;
+            height: 12px;
             cursor: pointer;
         }
         .bsd-video-index {
-            width: 32px;
+            width: 30px;
             font-size: 12px;
-            color: #888;
+            color: #555;
             text-align: center;
             flex-shrink: 0;
-            font-family: monospace;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-variant-numeric: tabular-nums; /* 等宽数字，对齐更好 */
         }
         .bsd-video-title {
             font-size: 12px;
             color: #333;
-            line-height: 1.3;
+            line-height: 1.2;
             word-break: break-all;
             flex: 1;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
         .bsd-status {
             font-size: 12px;

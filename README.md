@@ -37,7 +37,7 @@
 
 #### 方式一：GitHub 直接安装（🔥 推荐）
 1.  确保您的浏览器已安装 **Tampermonkey** (篡改猴) 扩展。
-2.  👉 **[点击这里直接安装脚本](https://github.com/Coope-X-Oak/bilibili-subtitle-downloader/raw/main/bilibili_subtitle_downloader.user.js)**
+2.  👉 **[点击这里直接安装脚本](https://github.com/Coope-X-Oak/bilibili-subtitle-downloader/raw/main/bilibili_subtitle_downloader.user.js?v=1.06)**
     > *如果点击后显示代码而非安装界面，请复制链接地址，在 Tampermonkey 管理面板中点击 "工具" -> "从 URL 安装"。*
 
 #### 方式二：GreasyFork 安装
