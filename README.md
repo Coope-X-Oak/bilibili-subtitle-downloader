@@ -1,72 +1,72 @@
-# Bilibili Subtitle Downloader (B站字幕下载器)
+# Bilibili Subtitle Batch Downloader - B站字幕批量下载神器
 
-![Version](https://img.shields.io/badge/version-v1.0-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-v1.0-blue?style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
+![Tampermonkey](https://img.shields.io/badge/Tampermonkey-Script-green?logo=tampermonkey&style=flat-square)
 
-一个用于批量下载Bilibili视频字幕的油猴脚本（UserScript）。支持多种格式（ASS, SRT, LRC, TXT, MD），提供紧凑的UI设计、多关键词筛选、WBI签名验证以及高并发下载支持。
+> **🚀 告别逐个点击！一键批量下载 B 站视频/合集字幕，专为学习与资料整理打造。**
+> 
+> 支持 **MD (Markdown)**、**TXT**、**LRC**、**SRT** 等多种格式，完美适配 **Obsidian**、**Notion** 等笔记软件。内置 WBI 签名与并发控制，稳定、高速、防风控。
 
-# 效果预览
-![alt text](image-1.png)
-![alt text](image.png)
+---
 
-## ✨ 主要功能
+## 📺 效果演示 (Preview)
 
-- **批量下载**：自动获取并下载视频列表中的所有字幕。
-- **多种格式**：支持导出为 JSON (原始格式), ASS, SRT, LRC, TXT, MD (Markdown) 格式。
-- **智能筛选**：支持多关键词空格分隔筛选，提供“全选匹配”功能。
-- **紧凑UI**：专为大量视频列表设计的紧凑型界面，不占用过多屏幕空间。
-- **稳定可靠**：
-  - 内置 WBI 签名算法，解决接口鉴权问题。
-  - 移除 ZIP 打包依赖，采用直接下载方式，避免大批量下载时浏览器崩溃。
-  - 智能并发控制与重试机制，防止请求过多被拦截。
+| **智能筛选与紧凑UI** | **批量任务处理** |
+| :---: | :---: |
+| ![智能筛选](image-1.png) | ![批量下载](image.png) |
+| *👆 支持多关键词空格筛选，一键全选匹配项* | *👆 实时进度显示，高速并发直连下载* |
+
+---
+
+## ✨ 核心亮点 (Why Use This?)
+
+*   **📚 笔记党福音**：独家支持 **.md (Markdown)** 格式导出，下载后直接拖入 Obsidian/Notion，配合视频时间戳，整理学习笔记效率翻倍！
+*   **⚡ 极速批量下载**：自动解析视频合集/列表/番剧，一键下载数百集字幕，无需手动重复操作。
+*   **🛡️ 稳定防风控**：
+    *   内置 **WBI 签名算法**，完美解决 B 站接口鉴权问题（403 Forbidden）。
+    *   **智能并发控制**（默认 3 线程）+ **指数退避重试**，防止 IP 临时封禁。
+*   **📂 直连下载模式**：彻底移除 ZIP 打包（避免大文件浏览器崩溃），采用浏览器原生下载 API，文件直接保存到本地。
+*   **🔍 强大的筛选器**：
+    *   支持**多关键词**（空格分隔）筛选，例如输入 `课程 01` 即可精准选中目标视频。
+    *   提供“全选匹配”按钮，秒选几十集视频。
 
 ## 🚀 安装与使用
 
-### 安装
+### 安装方式
 
-1.  确保您的浏览器已安装 **Tampermonkey** 扩展。
-2.  [点击这里安装脚本](https://greasyfork.org/scripts/YOUR_SCRIPT_ID) (链接待替换为GreasyFork实际链接)。
-3.  或者，将本项目中的 `bilibili_subtitle_downloader.user.js` 代码复制到 Tampermonkey 的新脚本中保存。
+#### 方式一：GitHub 直接安装（🔥 推荐）
+1.  确保您的浏览器已安装 **Tampermonkey** (篡改猴) 扩展。
+2.  👉 **[点击这里直接安装脚本](https://github.com/Cooper-X-Oak/bilibili-subtitle-downloader/raw/main/bilibili_subtitle_downloader.user.js)**
+    > *如果点击后显示代码而非安装界面，请复制链接地址，在 Tampermonkey 管理面板中点击 "工具" -> "从 URL 安装"。*
 
-### 使用
+#### 方式二：GreasyFork 安装
+> *注：由于新账号审核机制，GreasyFork 更新可能有延迟，推荐使用 GitHub 方式获取最新版。*
+1.  访问 [GreasyFork 脚本页面](https://greasyfork.org/scripts/YOUR_SCRIPT_ID) (待上线)。
+2.  点击 **“安装此脚本”** 按钮。
 
-1.  打开 Bilibili 个人空间页面的“视频”或“合集”列表，或者番剧/电影的列表页面。
-2.  在页面右侧可以看到 **“下载字幕”** 的悬浮面板。
-3.  **筛选视频**：在输入框中输入关键词（支持空格分隔多个关键词），点击“全选匹配”即可选中所有符合条件的视频。
-4.  **选择格式**：在下拉菜单中选择需要的字幕格式（默认推荐 .md 格式）。
+### 使用指南
+
+1.  **打开页面**：进入 Bilibili 个人空间的“视频/合集”页，或番剧/电影列表页。
+2.  **呼出面板**：页面右侧会出现蓝色的 **“下载字幕”** 悬浮按钮，点击展开。
+3.  **筛选视频**：
+    *   输入关键词（如 `Python 基础`），点击 **“全选匹配”**。
+4.  **选择格式**：
+    *   推荐选择 **`MD`** 格式（适合笔记）或 `SRT` 格式（适合播放器挂载）。
 5.  **开始下载**：
-    - **⚠️ 重要提示**：请先关闭浏览器的“下载前询问每个文件的保存位置”选项，否则会弹出大量保存对话框。
-    - 点击 **“批量下载”** 按钮，脚本将自动处理并下载所有选中的字幕文件。
+    *   🔴 **关键一步**：请务必关闭浏览器的 **“下载前询问每个文件的保存位置”** 选项！（否则会弹窗炸弹）
+    *   点击 **“批量下载”**，稍等片刻，所有字幕即刻保存到您的电脑。
 
-## ⚙️ 自动化发布流程
+## ⚙️ 自动化与开源
 
-本项目配置了 GitHub Actions 以实现自动化的构建与发布流程：
+本项目完全开源，并配置了 GitHub Actions 自动化流程：
+*   **自动构建**：Main 分支提交代码后，自动提取元数据。
+*   **自动发布**：构建成功后自动同步至 GreasyFork，确保用户第一时间获取更新。
 
-1.  **自动构建**：
-    - 当 `main` 分支有新的代码提交 (push) 时，GitHub Actions 会自动触发构建工作流。
-    - 工作流会运行 `generate_metadata.py` 脚本，从 `bilibili_subtitle_downloader.user.js` 中提取元数据生成 `bilibili_subtitle_downloader.meta.js` 文件。
+## 🤝 贡献与反馈
 
-2.  **GreasyFork 同步**：
-    - 构建成功后，工作流会自动将最新版本的脚本推送到 GreasyFork 平台。
-    - **密钥配置**：
-        - 需要在 GitHub 仓库的 `Settings` -> `Secrets and variables` -> `Actions` 中添加 `GREASYFORK_API_KEY`。
-        - 确保脚本头部元数据的 `@version` 字段已更新，否则 GreasyFork 可能会拒绝更新。
-
-## 🤝 贡献指南
-
-欢迎提交 Issue 或 Pull Request 来改进本项目！
-
-1.  **Fork** 本仓库。
-2.  创建一个新的分支 (`git checkout -b feature/AmazingFeature`)。
-3.  提交您的更改 (`git commit -m 'Add some AmazingFeature'`)。
-4.  推送到分支 (`git push origin feature/AmazingFeature`)。
-5.  开启一个 **Pull Request**。
-
-### 开发注意事项
-
-- 修改代码时，请同步更新 `CHANGELOG.md` 记录变更内容。
-- 保持代码风格一致，关键逻辑请添加中文注释。
-- 在提交前请在本地进行充分测试，确保不破坏现有功能。
+如果您觉得这个脚本好用，请给项目点个 **⭐️ Star**！
+遇到问题或有新功能建议？欢迎提交 [Issue](https://github.com/Cooper-X-Oak/bilibili-subtitle-downloader/issues) 或 Pull Request。
 
 ## 📜 许可证
 
