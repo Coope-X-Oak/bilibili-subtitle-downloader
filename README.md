@@ -1,6 +1,6 @@
 # Bilibili Subtitle Batch Downloader - B站AI字幕批量下载神器
 
-![Version](https://img.shields.io/badge/version-v1.06-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-v1.07-blue?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 ![Tampermonkey](https://img.shields.io/badge/Tampermonkey-Script-green?logo=tampermonkey&style=flat-square)
 
@@ -36,7 +36,7 @@
 
 #### 方式一：GitHub 直接安装（🔥 推荐）
 1.  确保您的浏览器已安装 **Tampermonkey** (篡改猴) 扩展。
-2.  👉 **[点击这里直接安装脚本](https://github.com/Coope-X-Oak/bilibili-subtitle-downloader/raw/main/bilibili_subtitle_downloader.user.js?v=1.06)**
+2.  👉 **[点击这里直接安装脚本](https://github.com/Coope-X-Oak/bilibili-subtitle-downloader/raw/main/bilibili_subtitle_downloader.user.js?v=1.07)**
     > *如果点击后显示代码而非安装界面，请复制链接地址，在 Tampermonkey 管理面板中点击 "工具" -> "从 URL 安装"。*
 
 #### 方式二：GreasyFork 安装
@@ -88,7 +88,7 @@
 
 
 
-![微信赞赏码](wechat.png)
+![微信赞赏码](Wechat.png)
 如果这个项目对你有帮助，欢迎考虑请我喝杯咖啡，助力持续开发与维护！ 
 
 ## 📜 许可证

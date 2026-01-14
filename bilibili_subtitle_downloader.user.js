@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili AI Subtitle Batch Downloader
 // @namespace    http://tampermonkey.net/
-// @version      1.06
+// @version      1.07
 // @description  批量下载B站视频合集/列表的AI中文字幕，支持MD/TXT/LRC/SRT格式，集成并发控制与重试机制。
 // @author       Cooper.X.Oak
 // @match        https://www.bilibili.com/video/*
@@ -26,7 +26,7 @@
 
 (function() {
     'use strict';
-    const VERSION = '1.06';
+    const VERSION = '1.07';
     
     // 配置项==========================================
     // 0. 内联依赖库 (FileSaver.js) - 解决 CDN 不稳定问题
@@ -707,28 +707,43 @@
         }
     }
 
-    function downloadSubtitleJson(url) {
-        return new Promise((resolve, reject) => {
-            GM_xmlhttpRequest({
-                method: "GET",
-                url: url,
-                timeout: 5000, // 添加超时
-                onload: function(response) {
-                    try {
-                        const json = JSON.parse(response.responseText);
-                        resolve(json);
-                    } catch (e) {
-                        reject(`JSON解析失败`);
+    async function downloadSubtitleJson(url, retryCount = 0) {
+        const MAX_RETRIES = 3;
+        try {
+            return await new Promise((resolve, reject) => {
+                GM_xmlhttpRequest({
+                    method: "GET",
+                    url: url,
+                    timeout: 10000, // 增加超时至 10s
+                    onload: function(response) {
+                        try {
+                            if (response.status !== 200) {
+                                reject(new Error(`HTTP ${response.status}`));
+                                return;
+                            }
+                            const json = JSON.parse(response.responseText);
+                            resolve(json);
+                        } catch (e) {
+                            reject(new Error(`JSON解析失败`));
+                        }
+                    },
+                    ontimeout: function() {
+                        reject(new Error('JSON下载超时'));
+                    },
+                    onerror: function(err) {
+                        reject(new Error(`下载失败: ${err.statusText || 'Unknown'}`));
                     }
-                },
-                ontimeout: function() {
-                    reject('JSON下载超时');
-                },
-                onerror: function(err) {
-                    reject(`下载失败`);
-                }
+                });
             });
-        });
+        } catch (e) {
+            if (retryCount < MAX_RETRIES) {
+                const delay = 1000 * (retryCount + 1);
+                console.warn(`[BiliSub] JSON下载失败，${delay}ms 后重试 (${retryCount + 1}/${MAX_RETRIES})...`, e);
+                await new Promise(r => setTimeout(r, delay));
+                return downloadSubtitleJson(url, retryCount + 1);
+            }
+            throw e;
+        }
     }
 
     async function loadVideoList() {
@@ -916,79 +931,13 @@
         const duration = ((Date.now() - startTime) / 1000).toFixed(2);
         
         if (successCount > 0) {
-            if (useZip) {
-                // ZIP 模式最后的打包环节
-                logStatus(`正在打包 ${successCount} 个文件...`);
-                try {
-                    // 阶段 1: 生成 ZIP Blob (带超时保护)
-                    const zipPromise = zip.generateAsync({
-                        type: "blob",
-                        compression: "STORE" 
-                    }, (metadata) => {
-                        logStatus(`ZIP生成中: ${metadata.percent.toFixed(1)}%`);
-                    });
-                    
-                    // 超时竞赛
-                    const timeoutPromise = new Promise((_, reject) => 
-                        setTimeout(() => reject(new Error('ZIP 生成超时 (>30s)')), 30000)
-                    );
-                    
-                    const content = await Promise.race([zipPromise, timeoutPromise]);
-                    
-                    logStatus(`ZIP 数据构建完成 (${(content.size / 1024).toFixed(1)} KB)`);
-                    
-                    // 大小检查
-                    if (content.size > 52428800) {
-                        logStatus('⚠️ 警告：ZIP 文件较大 (>50MB)，如下载失败请尝试分批下载');
-                    }
-                    
-                    const zipName = `B站字幕打包_${new Date().toISOString().slice(0,10)}_${new Date().getTime()}.zip`;
-                    logStatus(`正在唤起下载器...`);
-                    
-                    // 阶段 2: 优先使用 GM_download
-                    const url = URL.createObjectURL(content);
-                    try {
-                        // 阶段 3: 触发 GM_download
-                        await new Promise((resolve, reject) => {
-                            GM_download({
-                                url: url,
-                                name: zipName,
-                                saveAs: true,
-                                onload: () => {
-                                    URL.revokeObjectURL(url);
-                                    resolve();
-                                },
-                                onerror: (e) => reject(e)
-                            });
-                        });
-                        logStatus('★ 下载已开始 (GM_download)');
-                    } catch (gmErr) {
-                        console.warn('GM_download failed:', gmErr);
-                        logStatus('GM_download 失败，降级到浏览器下载...');
-                        
-                        // 降级：saveAs
-                        try {
-                             saveAs(content, zipName);
-                             logStatus(`★ 已调用 saveAs，请留意下载弹窗`);
-                        } catch (saveErr) {
-                             logStatus(`❌ 下载彻底失败: ${saveErr.message}`);
-                             // 提供手动链接
-                             logStatus(`提示: 请尝试取消"打包为ZIP"选项重试`);
-                        }
-                    }
-                } catch (e) {
-                    console.error(e);
-                    logStatus(`❌ 打包失败: ${e.message}`);
-                }
-            } else {
-                // 直接下载模式完成
-                logStatus(`★ 批量下载完成! 耗时:${duration}s 成功:${successCount} 失败:${failCount}`);
-            }
+            logStatus(`★ 批量下载完成! 耗时:${duration}s 成功:${successCount} 失败:${failCount}`);
         } else {
             logStatus(`任务结束，未下载到任何有效字幕 (耗时:${duration}s)。`);
         }
-
+        
         btn.disabled = false;
+        btn.innerText = '开始下载';
         setTimeout(() => { progressWrap.style.display = 'none'; }, 5000);
     }
 
