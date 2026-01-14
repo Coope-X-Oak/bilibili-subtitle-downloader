@@ -1,0 +1,45 @@
+name: GreasyFork Auto-Update
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'bilibili_subtitle_downloader.user.js'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+          
+      - name: Generate Metadata
+        run: python generate_metadata.py
+        
+      # Optional: Commit the generated metadata file if it changed
+      - name: Commit Metadata
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git add bilibili_subtitle_downloader.meta.js
+          if git diff --staged --quiet; then
+            echo "No changes in metadata"
+          else
+            git commit -m "chore: update metadata [skip ci]"
+            git push
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Publish to GreasyFork
+        # Using adriel/greasyfork-sync as a standard action for this task.
+        # Ensure GREASYFORK_API_KEY is set in your repository secrets.
+        uses: adriel/greasyfork-sync@v1
+        with:
+          api_key: ${{ secrets.GREASYFORK_API_KEY }}
+          path: 'bilibili_subtitle_downloader.user.js'
