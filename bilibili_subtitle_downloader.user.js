@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili AI Subtitle Batch Downloader
 // @namespace    http://tampermonkey.net/
-// @version      1.02
+// @version      1.03
 // @description  批量下载B站视频合集/列表的AI中文字幕，支持MD/TXT/LRC/SRT格式，集成并发控制与重试机制。
 // @author       Cooper.X.Oak
 // @match        https://www.bilibili.com/video/*
@@ -13,6 +13,8 @@
 // @grant        unsafeWindow
 // @connect      bilibili.com
 // @connect      hdslb.com
+// @downloadURL  https://github.com/Coope-X-Oak/bilibili-subtitle-downloader/raw/main/bilibili_subtitle_downloader.user.js
+// @updateURL    https://github.com/Coope-X-Oak/bilibili-subtitle-downloader/raw/main/bilibili_subtitle_downloader.user.js
 // @license      MIT
 // ==/UserScript==
 
@@ -24,7 +26,7 @@
 
 (function() {
     'use strict';
-    const VERSION = '1.01';
+    const VERSION = '1.02';
     
     // 配置项==========================================
     // 0. 内联依赖库 (FileSaver.js) - 解决 CDN 不稳定问题
@@ -52,12 +54,13 @@
             font-size: 15px;
             font-weight: bold;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-            transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            transition: right 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28), padding 0.3s ease, transform 0.3s ease; /* 优化 transition 性能 */
             border: 2px solid rgba(255,255,255,0.3);
             border-right: none;
             display: flex;
             align-items: center;
             gap: 5px;
+            will-change: right, padding, transform; /* 提示浏览器提前优化渲染层 */
         }
         #bili-sub-downloader-btn:hover {
             right: -5px;
@@ -331,6 +334,15 @@
     // 2. 基础 UI 注入 (UI Injection)
     // ==========================================
     function initUI() {
+        // 延迟注入，避免阻塞首屏关键资源加载
+        if (document.readyState !== 'loading') {
+            injectElements();
+        } else {
+            document.addEventListener('DOMContentLoaded', injectElements);
+        }
+    }
+
+    function injectElements() {
         GM_addStyle(STYLES);
 
         const toggleBtn = document.createElement('div');
@@ -344,6 +356,11 @@
             <div class="bsd-header">
                 <h3>批量字幕下载 v${VERSION}</h3>
                 <span class="bsd-close">×</span>
+            </div>
+            
+            <!-- 重要声明 -->
+            <div style="background: #fff3cd; color: #856404; padding: 8px 10px; font-size: 12px; border-bottom: 1px solid #ffeeba;">
+                ⚠️ 本工具仅提取B站<b>官方AI字幕</b>。如视频无CC/AI字幕，则无法下载。不支持转录。
             </div>
             
             <!-- 筛选栏 -->
