@@ -1,6 +1,6 @@
 # Bilibili Subtitle Batch Downloader - B站AI字幕批量下载神器
 
-![Version](https://img.shields.io/badge/version-v1.04-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-v1.05-blue?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 ![Tampermonkey](https://img.shields.io/badge/Tampermonkey-Script-green?logo=tampermonkey&style=flat-square)
 
