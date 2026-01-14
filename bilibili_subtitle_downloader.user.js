@@ -325,7 +325,7 @@
 
         const toggleBtn = document.createElement('div');
         toggleBtn.id = 'bili-sub-downloader-btn';
-        toggleBtn.innerText = 'AI字幕下载';
+        toggleBtn.innerText = '✨AI字幕神器';
         document.body.appendChild(toggleBtn);
 
         const panel = document.createElement('div');

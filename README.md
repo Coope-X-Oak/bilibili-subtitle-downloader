@@ -1,10 +1,10 @@
-# Bilibili Subtitle Batch Downloader - B站字幕批量下载神器
+# Bilibili Subtitle Batch Downloader - B站AI字幕批量下载神器
 
 ![Version](https://img.shields.io/badge/version-v1.0-blue?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 ![Tampermonkey](https://img.shields.io/badge/Tampermonkey-Script-green?logo=tampermonkey&style=flat-square)
 
-> **🚀 告别逐个点击！一键批量下载 B 站视频/合集字幕，专为学习与资料整理打造。**
+> **🚀 告别逐个点击！一键批量下载 B 站视频/合集AI字幕，专为学习与资料整理打造。**
 > 
 > 支持 **MD (Markdown)**、**TXT**、**LRC**、**SRT** 等多种格式，完美适配 **Obsidian**、**Notion** 等笔记软件。内置 WBI 签名与并发控制，稳定、高速、防风控。
 
@@ -48,14 +48,15 @@
 ### 使用指南
 
 1.  **打开页面**：进入 Bilibili 个人空间的“视频/合集”页，或番剧/电影列表页。
-2.  **呼出面板**：页面右侧会出现蓝色的 **“下载字幕”** 悬浮按钮，点击展开。
+2.  **呼出面板**：页面右侧会出现蓝色的 **“✨AI字幕神器”** 悬浮按钮，点击展开。
 3.  **筛选视频**：
-    *   输入关键词（如 `Python 基础`），点击 **“全选匹配”**。
+    *   点击`刷新列表`按钮，加载所在合集内所有视频。
+    *   输入关键词（如 `Python 基础`），可同时筛选多个关键词，用空格键隔开，点击 **“全选匹配”**。
 4.  **选择格式**：
     *   推荐选择 **`MD`** 格式（适合笔记）或 `SRT` 格式（适合播放器挂载）。
 5.  **开始下载**：
-    *   🔴 **关键一步**：请务必关闭浏览器的 **“下载前询问每个文件的保存位置”** 选项！（否则会弹窗炸弹）
-    *   点击 **“批量下载”**，稍等片刻，所有字幕即刻保存到您的电脑。
+    *   🔴 **关键一步**：建议关闭浏览器的 **“下载前询问每个文件的保存位置”** 选项！（否则会逐个弹窗）
+    *   点击 **“批量下载”**，稍等片刻，所有字幕即刻保存到您的电默认下载位置。
 
 ## ⚙️ 自动化与开源
 
@@ -66,7 +67,7 @@
 ## 🤝 贡献与反馈
 
 如果您觉得这个脚本好用，请给项目点个 **⭐️ Star**！
-遇到问题或有新功能建议？欢迎提交 [Issue](https://github.com/Coope-X-Oak/bilibili-subtitle-downloader/issues) 或 Pull Request。
+遇到问题或有新功能建议？欢迎提交 [Issue](https://github.com/Cooper-X-Oak/bilibili-subtitle-downloader/issues) 或 Pull Request。
 
 ## 📜 许可证
 
