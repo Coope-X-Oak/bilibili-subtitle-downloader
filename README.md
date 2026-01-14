@@ -1,6 +1,6 @@
 # Bilibili Subtitle Batch Downloader - B站AI字幕批量下载神器
 
-![Version](https://img.shields.io/badge/version-v1.03-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-v1.04-blue?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 ![Tampermonkey](https://img.shields.io/badge/Tampermonkey-Script-green?logo=tampermonkey&style=flat-square)
 
@@ -14,7 +14,7 @@
 
 | **智能筛选与紧凑UI** | **批量任务处理** |
 | :---: | :---: |
-| ![智能筛选](智能筛选.png) | ![批量下载](批量下载.png)|
+| ![智能筛选](UI示例.png) | ![批量下载](批量下载.png)|
 | *👆 支持多关键词空格筛选，一键全选匹配项* | *👆 实时进度显示，高速并发直连下载* |
 
 ---

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili AI Subtitle Batch Downloader
 // @namespace    http://tampermonkey.net/
-// @version      1.03
+// @version      1.04
 // @description  批量下载B站视频合集/列表的AI中文字幕，支持MD/TXT/LRC/SRT格式，集成并发控制与重试机制。
 // @author       Cooper.X.Oak
 // @match        https://www.bilibili.com/video/*
@@ -26,7 +26,7 @@
 
 (function() {
     'use strict';
-    const VERSION = '1.02';
+    const VERSION = '1.04';
     
     // 配置项==========================================
     // 0. 内联依赖库 (FileSaver.js) - 解决 CDN 不稳定问题
@@ -83,45 +83,44 @@
             display: flex;
             flex-direction: column;
             font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+            padding-top: 10px;
         }
         #bili-sub-downloader-panel.open {
             right: 0;
         }
-        .bsd-header {
-            padding: 12px 15px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #f8f8f8;
-            flex-shrink: 0;
-        }
-        .bsd-header h3 {
-            margin: 0;
-            font-size: 15px;
-            color: #333;
-        }
         .bsd-close {
+            position: absolute;
+            top: 8px;
+            right: 12px;
             cursor: pointer;
             color: #999;
-            font-size: 20px;
+            font-size: 24px;
+            z-index: 10010;
+            line-height: 1;
+        }
+        .bsd-close:hover {
+            color: #333;
         }
         .bsd-content {
             flex: 1;
             overflow-y: auto;
             padding: 0;
-            min-height: 200px; /* 强制最小高度，防止被压缩 */
+            min-height: 200px;
         }
         .bsd-content::-webkit-scrollbar {
-            width: 6px;
+            width: 12px;
         }
         .bsd-content::-webkit-scrollbar-thumb {
             background-color: #ccc;
-            border-radius: 3px;
+            border-radius: 6px;
+            border: 2px solid #fff;
+        }
+        .bsd-content::-webkit-scrollbar-thumb:hover {
+            background-color: #999;
         }
         /* 筛选栏样式 */
         .bsd-filter-bar {
-            padding: 6px 10px;
+            padding: 8px 10px;
             background: #fff;
             border-bottom: 1px solid #eee;
             display: flex;
@@ -136,7 +135,7 @@
         }
         .bsd-filter-input {
             flex: 1;
-            padding: 4px 6px;
+            padding: 6px 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 12px;
@@ -147,7 +146,7 @@
             border-color: #00AEEC;
         }
         .bsd-filter-btn {
-            padding: 4px 8px;
+            padding: 4px 10px;
             background: #f6f6f6;
             border: 1px solid #ddd;
             border-radius: 4px;
@@ -176,7 +175,6 @@
             flex-direction: column;
             flex-shrink: 0;
         }
-        /* 紧凑控制行 */
         .bsd-ctrl-row {
             display: flex;
             justify-content: space-between;
@@ -197,7 +195,6 @@
             font-size: 12px;
             outline: none;
         }
-        /* 按钮行 */
         .bsd-btn-row {
             display: flex;
             gap: 8px;
@@ -207,13 +204,13 @@
             background: #00AEEC;
             color: white;
             border: none;
-            padding: 6px 0;
+            padding: 8px 0;
             border-radius: 4px;
             cursor: pointer;
             font-size: 13px;
             text-align: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            flex: 1; /* 等宽排列 */
+            flex: 1;
         }
         .bsd-btn:disabled {
             background: #ccc;
@@ -225,14 +222,13 @@
             color: #666;
             border: 1px solid #ddd;
         }
-        /* 紧凑型列表项 */
         .bsd-video-item {
             display: flex;
             align-items: center;
-            padding: 2px 6px; /* 极简间距 */
+            padding: 4px 8px;
             border-bottom: 1px solid #f9f9f9;
-            gap: 6px;
-            min-height: 24px; /* 极简高度 */
+            gap: 8px;
+            min-height: 28px;
             transition: background 0.2s;
         }
         .bsd-video-item:hover {
@@ -240,19 +236,27 @@
         }
         .bsd-video-item input[type="checkbox"] {
             margin: 0;
-            width: 13px;
-            height: 13px;
+            width: 14px;
+            height: 14px;
             cursor: pointer;
+        }
+        .bsd-video-index {
+            width: 32px;
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            flex-shrink: 0;
+            font-family: monospace;
         }
         .bsd-video-title {
             font-size: 12px;
             color: #333;
-            line-height: 1.2;
+            line-height: 1.3;
             word-break: break-all;
             flex: 1;
             overflow: hidden;
             text-overflow: ellipsis;
-            white-space: nowrap; /* 单行显示 */
+            white-space: nowrap;
         }
         .bsd-status {
             font-size: 12px;
@@ -262,14 +266,14 @@
             background: #eee;
             padding: 6px;
             border-radius: 4px;
-            height: 60px; /* 减小日志高度 */
+            height: 60px;
             overflow-y: auto;
             white-space: pre-wrap;
             border: 1px solid #ddd;
         }
         .bsd-progress-container {
             width: 100%;
-            height: 3px;
+            height: 4px;
             background: #eee;
             margin-top: 5px;
             border-radius: 2px;
@@ -287,46 +291,6 @@
         }
         .bsd-highlight {
             background-color: #fffde7;
-        }
-        /* 自定义 Tooltip 样式 */
-        .bsd-tooltip-container {
-            position: relative;
-            display: inline-block;
-            cursor: help;
-        }
-        .bsd-tooltip-text {
-            visibility: hidden;
-            width: 300px;
-            background-color: #333;
-            color: #fff;
-            text-align: left;
-            border-radius: 6px;
-            padding: 8px 10px;
-            position: absolute;
-            z-index: 10003;
-            bottom: 125%; /* 显示在上方 */
-            right: 0;
-            opacity: 0;
-            transition: opacity 0.2s; /* 快速显示，仅0.2s淡入 */
-            font-size: 12px;
-            line-height: 1.4;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            white-space: pre-wrap; /* 保留换行 */
-        }
-        .bsd-tooltip-container:hover .bsd-tooltip-text {
-            visibility: visible;
-            opacity: 1;
-        }
-        /* 小三角箭头 */
-        .bsd-tooltip-text::after {
-            content: "";
-            position: absolute;
-            top: 100%;
-            right: 15px;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: #333 transparent transparent transparent;
         }
     `;
 
@@ -353,21 +317,19 @@
         const panel = document.createElement('div');
         panel.id = 'bili-sub-downloader-panel';
         panel.innerHTML = `
-            <div class="bsd-header">
-                <h3>批量字幕下载 v${VERSION}</h3>
-                <span class="bsd-close">×</span>
+            <span class="bsd-close">×</span>
+            
+            <!-- Combined Warning -->
+            <div style="background: #fff3cd; color: #856404; padding: 12px 15px; font-size: 12px; border-bottom: 1px solid #ffeeba; line-height: 1.5;">
+                <b>⚠️ 重要提示：</b>本工具仅提取B站<b>官方AI/CC字幕</b>，不支持转录。<br>
+                批量下载前，请务必<b>关闭浏览器的“下载前询问每个文件的保存位置”</b>设置，否则会弹出大量保存对话框。
             </div>
             
-            <!-- 重要声明 -->
-            <div style="background: #fff3cd; color: #856404; padding: 8px 10px; font-size: 12px; border-bottom: 1px solid #ffeeba;">
-                ⚠️ 本工具仅提取B站<b>官方AI字幕</b>。如视频无CC/AI字幕，则无法下载。不支持转录。
-            </div>
-            
-            <!-- 筛选栏 -->
+            <!-- Filter Bar -->
             <div class="bsd-filter-bar">
                 <div class="bsd-filter-row">
-                    <input type="text" class="bsd-filter-input" id="bsd-filter-input" placeholder="输入关键词筛选 (空格分隔, 任一匹配)">
-                    <button class="bsd-filter-btn" id="bsd-filter-select-btn" title="全选当前显示的所有匹配项">全选匹配</button>
+                    <input type="text" class="bsd-filter-input" id="bsd-filter-input" placeholder="输入关键词 (空格分隔, OR匹配)">
+                    <button class="bsd-filter-btn" id="bsd-filter-select-btn" title="选中所有符合当前筛选条件的视频">选中筛选结果</button>
                 </div>
                 <div class="bsd-filter-stat" id="bsd-filter-stat"></div>
             </div>
@@ -395,19 +357,6 @@
                      </div>
                 </div>
                 
-                <!-- 新增：提示信息 -->
-                <div class="bsd-ctrl-row" style="justify-content:flex-end; margin-bottom:5px;">
-                    <div class="bsd-tooltip-container">
-                        <span style="color:#e67e22; font-size:12px; text-align:right;">
-                            ⚠️ 提示 (悬浮查看)
-                        </span>
-                        <span class="bsd-tooltip-text">请关闭浏览器的“下载前询问每个文件的保存位置” 即可实现批量自动下载
-
-v1.0更新：
-正式版发布！完善文档与自动化发布流程。</span>
-                    </div>
-                </div>
-
                 <!-- 按钮行 -->
                 <div class="bsd-btn-row">
                     <button class="bsd-btn secondary" id="bsd-load-btn">刷新列表</button>
@@ -472,8 +421,8 @@ v1.0更新：
         let matchCount = 0;
         items.forEach(item => {
             const title = item.querySelector('.bsd-video-title').innerText.toLowerCase();
-            // 检查所有关键词是否都在标题中
-            const isMatch = keywords.length > 0 && keywords.every(k => title.includes(k));
+            // 检查任一关键词是否在标题中 (OR 逻辑)
+            const isMatch = keywords.length > 0 && keywords.some(k => title.includes(k));
             
             // v0.20: 仅高亮匹配项，不隐藏任何项
             if (isMatch) {
@@ -809,7 +758,8 @@ v1.0更新：
                 
                 item.innerHTML = `
                     <input type="checkbox" data-cid="${v.cid}" data-bvid="${v.bvid}" data-title="${safeTitle}">
-                    <div class="bsd-video-title">${index + 1}. ${v.title}</div>
+                    <div class="bsd-video-index">${index + 1}</div>
+                    <div class="bsd-video-title" title="${v.title}">${v.title}</div>
                 `;
                 container.appendChild(item);
                 item.querySelector('input').addEventListener('change', updateSelectionCount);
