@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili AI Subtitle Batch Downloader
 // @namespace    http://tampermonkey.net/
-// @version      1.05
+// @version      1.06
 // @description  批量下载B站视频合集/列表的AI中文字幕，支持MD/TXT/LRC/SRT格式，集成并发控制与重试机制。
 // @author       Cooper.X.Oak
 // @match        https://www.bilibili.com/video/*
@@ -19,14 +19,14 @@
 // ==/UserScript==
 
 // 创建原委：解决B站合集视频AI字幕无法批量下载、只能逐个点击的痛点。v1.0正式版已发布，提供稳定、高效的批量下载体验。
-// 用途：自动化提取 B 站视频列表（支持合集/列表/番剧），批量请求 WBI 签名接口获取字幕，支持转换为 MD/TXT/LRC/SRT 等多种格式并直接批量下载。提供智能多关键词筛选、全选匹配及紧凑型 UI，极大提升批量获取字幕的效率。
+// 用途：自动化提取 B 站视频列表（支持合集/列表/番剧），批量请求 WBI 签名接口获取字幕，支持转换为 MD/TXT/LRC/SRT 等多种格式并直接批量下载。提供智能多关键词筛选，及紧凑型 UI，极大提升批量获取字幕的效率。
 // 风险说明：
 // 1. 高并发请求可能触发 B 站风控（WBI 接口报错 403/412），脚本内置了智能并发控制（默认 3 并发）与指数退避重试机制来规避此风险。
 // 2. 批量直接下载模式下，务必关闭浏览器的“下载前询问每个文件的保存位置”设置，否则会弹出大量保存对话框。
 
 (function() {
     'use strict';
-    const VERSION = '1.05';
+    const VERSION = '1.06';
     
     // 配置项==========================================
     // 0. 内联依赖库 (FileSaver.js) - 解决 CDN 不稳定问题
