@@ -1,6 +1,6 @@
 # Bilibili Subtitle Batch Downloader - B站AI字幕批量下载神器
 
-![Version](https://img.shields.io/badge/version-v1.02-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-v1.03-blue?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 ![Tampermonkey](https://img.shields.io/badge/Tampermonkey-Script-green?logo=tampermonkey&style=flat-square)
 
@@ -21,8 +21,8 @@
 
 ## ✨ 核心亮点 (Why Use This?)
 
-*   **📚 笔记党福音**：独家支持 **.md (Markdown)** 格式导出，下载后直接拖入 Obsidian/Notion，配合视频时间戳，整理学习笔记效率翻倍！
-*   **⚡ 极速批量下载**：自动解析视频合集/列表/番剧，一键下载数百集字幕，无需手动重复操作。
+*   **📚 笔记党福音**：支持 **.md (Markdown)** 格式导出，下载后直接拖入 Obsidian/Notion，配合视频时间戳，整理学习笔记效率翻倍！
+*   **⚡ 极速批量下载**：自动获取当前所处的视频合集/列表/番剧，一键下载数百集字幕，无需手动重复操作。
 *   **🛡️ 稳定防风控**：
     *   内置 **WBI 签名算法**，完美解决 B 站接口鉴权问题（403 Forbidden）。
     *   **智能并发控制**（默认 3 线程）+ **指数退避重试**，防止 IP 临时封禁。
