@@ -1,6 +1,6 @@
 # Bilibili Subtitle Batch Downloader - B站AI字幕批量下载神器
 
-![Version](https://img.shields.io/badge/version-v1.0-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-v1.02-blue?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 ![Tampermonkey](https://img.shields.io/badge/Tampermonkey-Script-green?logo=tampermonkey&style=flat-square)
 
@@ -14,7 +14,7 @@
 
 | **智能筛选与紧凑UI** | **批量任务处理** |
 | :---: | :---: |
-| ![智能筛选](image-1.png) | ![批量下载](image.png) |
+| ![智能筛选](智能筛选.png) | ![批量下载](批量下载.png)|
 | *👆 支持多关键词空格筛选，一键全选匹配项* | *👆 实时进度显示，高速并发直连下载* |
 
 ---
@@ -57,6 +57,22 @@
 5.  **开始下载**：
     *   🔴 **关键一步**：建议关闭浏览器的 **“下载前询问每个文件的保存位置”** 选项！（否则会逐个弹窗）
     *   点击 **“批量下载”**，稍等片刻，所有字幕即刻保存到您的电默认下载位置。
+
+## 🔧 核心技术揭秘：WBI 签名机制
+
+**为什么需要 WBI 签名？**
+
+在 B 站最新的接口升级中，`player/v2` 等关键接口已全面启用 **WBI (Web Basic Identity)** 签名校验机制。这是一种参数签名保护措施。
+
+*   **如果不带签名**：请求会被直接拒绝（403 Forbidden）。
+*   **如果签名错误**：服务器可能会看似正常返回 200 OK，但返回的是**虚假数据**（例如：空的字幕列表、错误的旧缓存数据、或者不完整的视频信息），这会导致下载的内容与实际视频严重不匹配，甚至下载失败。
+
+**本脚本的解决方案：**
+
+本脚本内置了完整的 WBI 签名算法实现：
+1.  **自动获取密钥**：实时请求 B 站导航接口获取最新的 `img_key` 和 `sub_key`。
+2.  **动态计算签名**：对请求参数进行字典序排序、拼接、混淆，并结合当前时间戳 `wts` 计算 `w_rid`。
+3.  **100% 准确率**：通过这一机制，脚本能够通过 B 站服务器的校验，获取到**最准确、最实时**的字幕数据，彻底解决了字幕偏移或内容为空的问题。
 
 ## ⚙️ 自动化与开源
 

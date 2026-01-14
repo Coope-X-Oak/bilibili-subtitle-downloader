@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili AI Subtitle Batch Downloader
 // @namespace    http://tampermonkey.net/
-// @version      1.01
+// @version      1.02
 // @description  批量下载B站视频合集/列表的AI中文字幕，支持MD/TXT/LRC/SRT格式，集成并发控制与重试机制。
 // @author       Cooper.X.Oak
 // @match        https://www.bilibili.com/video/*
@@ -24,7 +24,7 @@
 
 (function() {
     'use strict';
-    const VERSION = '1.0';
+    const VERSION = '1.01';
     
     // 配置项==========================================
     // 0. 内联依赖库 (FileSaver.js) - 解决 CDN 不稳定问题
@@ -43,17 +43,27 @@
             top: 200px;
             right: 0;
             z-index: 10001;
-            background: #00AEEC;
+            background: linear-gradient(135deg, #FF69B4, #00AEEC);
             color: #fff;
-            padding: 10px;
-            border-radius: 5px 0 0 5px;
+            padding: 12px 18px;
+            border-radius: 25px 0 0 25px;
             cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            font-size: 14px;
-            transition: right 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 174, 236, 0.4);
+            font-size: 15px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-right: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
         #bili-sub-downloader-btn:hover {
             right: -5px;
+            padding-right: 25px;
+            box-shadow: 0 6px 20px rgba(255, 105, 180, 0.6);
+            transform: scale(1.05);
         }
         #bili-sub-downloader-panel {
             position: fixed;
@@ -339,7 +349,7 @@
             <!-- 筛选栏 -->
             <div class="bsd-filter-bar">
                 <div class="bsd-filter-row">
-                    <input type="text" class="bsd-filter-input" id="bsd-filter-input" placeholder="输入关键词筛选 (空格分隔)">
+                    <input type="text" class="bsd-filter-input" id="bsd-filter-input" placeholder="输入关键词筛选 (空格分隔, 任一匹配)">
                     <button class="bsd-filter-btn" id="bsd-filter-select-btn" title="全选当前显示的所有匹配项">全选匹配</button>
                 </div>
                 <div class="bsd-filter-stat" id="bsd-filter-stat"></div>
