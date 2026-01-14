@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili AI Subtitle Batch Downloader
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.01
 // @description  批量下载B站视频合集/列表的AI中文字幕，支持MD/TXT/LRC/SRT格式，集成并发控制与重试机制。
 // @author       Cooper.X.Oak
 // @match        https://www.bilibili.com/video/*
