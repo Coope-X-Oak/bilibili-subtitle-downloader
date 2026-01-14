@@ -26,7 +26,7 @@
 
 (function() {
     'use strict';
-    const VERSION = '1.04';
+    const VERSION = '1.05';
     
     // 配置项==========================================
     // 0. 内联依赖库 (FileSaver.js) - 解决 CDN 不稳定问题
