@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Bilibili AI Subtitle Batch Downloader
 // @namespace    http://tampermonkey.net/
-// @version      1.10
-// @description  批量下载B站视频合集/列表的AI中文字幕，支持MD/TXT/LRC/SRT格式，集成并发控制与重试机制。
+// @version      1.14.2
+// @description  批量下载B站视频合集/列表的AI中文字幕，支持MD/TXT/LRC/SRT格式，MD格式支持YAML元数据(新增合集名称与字幕链接)，集成并发控制与重试机制。
 // @author       Cooper.X.Oak
 // @match        https://www.bilibili.com/video/*
 // @icon         https://www.bilibili.com/favicon.ico
@@ -26,7 +26,7 @@
 
 (function() {
     'use strict';
-    const VERSION = '1.10';
+    const VERSION = '1.14.2';
     
     // 配置项==========================================
     // 0. 内联依赖库 (FileSaver.js) - 解决 CDN 不稳定问题
@@ -102,10 +102,11 @@
             color: #333;
         }
         .bsd-content {
-            flex: 1;
+            height: 200px;
             overflow-y: auto;
             padding: 0;
-            min-height: 200px;
+            resize: vertical;
+            border-bottom: 1px solid #eee;
         }
         .bsd-content::-webkit-scrollbar {
             width: 12px;
@@ -272,15 +273,16 @@
         .bsd-status {
             font-size: 12px;
             color: #666;
-            margin-top: 5px;
+            margin-top: 10px; /* 增加顶部间距 */
             text-align: left;
-            background: #eee;
-            padding: 6px;
+            background: #f9f9f9; /* 稍微亮一点的背景 */
+            padding: 8px;
             border-radius: 4px;
-            height: 60px;
+            height: 120px; /* 增加高度 */
             overflow-y: auto;
             white-space: pre-wrap;
             border: 1px solid #ddd;
+            resize: vertical; /* 允许用户手动调整高度 */
         }
         .bsd-progress-container {
             width: 100%;
@@ -309,6 +311,55 @@
         .bsd-video-title.failed {
             color: red !important; /* 失败标题标红 */
         }
+        /* Modal Styles */
+        .bsd-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10001;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .bsd-modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            position: relative;
+        }
+        .bsd-modal-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 20px;
+            cursor: pointer;
+            color: #999;
+        }
+        .bsd-modal-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .bsd-modal-body {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.6;
+        }
+        .bsd-modal-body p {
+            margin-bottom: 8px;
+        }
+        .bsd-modal-body b {
+            color: #333;
+        }
     `;
 
     // ==========================================
@@ -318,8 +369,14 @@
         // 延迟注入，避免阻塞首屏关键资源加载
         if (document.readyState !== 'loading') {
             injectElements();
+            // v1.14: Auto load list
+            setTimeout(loadVideoList, 500);
         } else {
-            document.addEventListener('DOMContentLoaded', injectElements);
+            document.addEventListener('DOMContentLoaded', () => {
+                injectElements();
+                // v1.14: Auto load list
+                setTimeout(loadVideoList, 500);
+            });
         }
     }
 
@@ -335,12 +392,6 @@
         panel.id = 'bili-sub-downloader-panel';
         panel.innerHTML = `
             <span class="bsd-close">×</span>
-            
-            <!-- Combined Warning -->
-            <div style="background: #fff3cd; color: #856404; padding: 12px 15px; font-size: 12px; border-bottom: 1px solid #ffeeba; line-height: 1.5;">
-                <b>⚠️ 重要提示：</b>本工具仅提取B站<b>官方AI/CC字幕</b>，不支持转录。<br>
-                批量下载前，请务必<b>关闭浏览器的“下载前询问每个文件的保存位置”</b>设置，否则会弹出大量保存对话框。
-            </div>
             
             <!-- Filter Bar -->
             <div class="bsd-filter-bar">
@@ -377,6 +428,7 @@
                 
                 <!-- 按钮行 -->
                 <div class="bsd-btn-row">
+                    <button class="bsd-btn secondary" id="bsd-notice-btn">使用须知</button>
                     <button class="bsd-btn secondary" id="bsd-load-btn">刷新列表</button>
                     <button class="bsd-btn" id="bsd-download-btn" disabled>开始下载</button>
                 </div>
@@ -385,6 +437,25 @@
                     <div class="bsd-progress-bar" id="bsd-progress-bar"></div>
                 </div>
                 <div class="bsd-status" id="bsd-status-text">就绪</div>
+            </div>
+
+            <!-- Modal -->
+            <div class="bsd-modal-overlay" id="bsd-notice-modal">
+                <div class="bsd-modal-content">
+                    <span class="bsd-modal-close" id="bsd-modal-close">×</span>
+                    <div class="bsd-modal-title">使用须知 & 免责声明</div>
+                    <div class="bsd-modal-body">
+                        <p><b>⚠️ 重要提示：</b></p>
+                        <p>1. 本工具仅提取B站<b>官方AI/CC字幕</b>，不支持视频转录。</p>
+                        <p>2. 批量下载前，请务必<b>关闭浏览器的“下载前询问每个文件的保存位置”</b>设置，否则会弹出大量保存对话框。</p>
+                        <hr style="border:0; border-top:1px solid #eee; margin:10px 0;">
+                        <p><b>⚖️ 免责声明：</b></p>
+                        <p>1. 本脚本仅供<b>个人学习与技术交流</b>使用，严禁用于任何非法用途。</p>
+                        <p>2. 用户应自行承担使用本脚本可能产生的任何风险与责任。</p>
+                        <p>3. 请合理控制使用频率，避免对 B 站服务器造成不必要的压力。</p>
+                        <p>4. 作者不对因使用本脚本导致的任何损失（包括但不限于账号封禁、数据丢失）负责。</p>
+                    </div>
+                </div>
             </div>
         `;
         document.body.appendChild(panel);
@@ -398,6 +469,20 @@
         panel.querySelector('.bsd-close').addEventListener('click', () => {
             panel.classList.remove('open');
             toggleBtn.style.right = '0';
+        });
+
+        // Modal Events
+        const modal = document.getElementById('bsd-notice-modal');
+        document.getElementById('bsd-notice-btn').addEventListener('click', () => {
+            modal.style.display = 'flex';
+        });
+        document.getElementById('bsd-modal-close').addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
         });
 
         document.getElementById('bsd-load-btn').addEventListener('click', loadVideoList);
@@ -546,6 +631,39 @@
         return jsonBody.body.map(item => item.content).join('\n');
     }
 
+    function jsonToMd(jsonBody, metadata) {
+        let yaml = '---\n';
+        // Escape quotes in title/author
+        const safeTitle = (metadata.title || '').replace(/"/g, '\\"');
+        const safeOwner = (metadata.owner || '').replace(/"/g, '\\"');
+        const safeCollection = (metadata.collection || '').replace(/"/g, '\\"');
+        
+        yaml += `title: "${safeTitle}"\n`;
+        
+        if (metadata.pubdate) {
+            const d = new Date(metadata.pubdate * 1000);
+            const pad = n => n.toString().padStart(2, '0');
+            const dateStr = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+            yaml += `date: "${dateStr}"\n`;
+        } else {
+             yaml += `date: ""\n`;
+        }
+        
+        yaml += `author: "${safeOwner}"\n`;
+        yaml += `collection: "${safeCollection}"\n`;
+        yaml += `url: "https://www.bilibili.com/video/${metadata.bvid}"\n`;
+        if (metadata.subtitle_url) {
+             yaml += `subtitle_url: "${metadata.subtitle_url}"\n`;
+        }
+        yaml += '---\n\n';
+
+        if (!jsonBody || !jsonBody.body || jsonBody.body.length === 0) {
+            return yaml + '> 本视频未提供字幕或字幕下载失败（仅生成元数据）。\n';
+        }
+
+        return yaml + jsonBody.body.map(item => item.content).join('\n');
+    }
+
     function jsonToLrc(jsonBody) {
         if (!jsonBody || !jsonBody.body) return '';
         return jsonBody.body.map(item => {
@@ -639,6 +757,17 @@
                             return;
                         }
                         
+                        const ownerName = (data.data.owner && data.data.owner.name) ? data.data.owner.name : 'Unknown';
+                        const pubdate = data.data.pubdate || 0;
+                        let collectionTitle = '';
+
+                        // Determine collection/season title
+                        if (data.data.ugc_season && data.data.ugc_season.title) {
+                            collectionTitle = data.data.ugc_season.title;
+                        } else {
+                            collectionTitle = data.data.title; // Default to main video title for single/multi-page videos
+                        }
+
                         let list = [];
                         if (data.data.ugc_season && data.data.ugc_season.sections) {
                              data.data.ugc_season.sections.forEach(sec => {
@@ -647,7 +776,10 @@
                                          title: ep.title,
                                          bvid: ep.bvid,
                                          cid: ep.cid,
-                                         aid: ep.aid
+                                         aid: ep.aid,
+                                         owner: (ep.arc && ep.arc.author && ep.arc.author.name) ? ep.arc.author.name : ownerName,
+                                         pubdate: (ep.arc && ep.arc.pubdate) ? ep.arc.pubdate : pubdate,
+                                         collection: collectionTitle
                                      })));
                                  }
                              });
@@ -656,15 +788,21 @@
                                 title: p.part,
                                 bvid: bvid,
                                 cid: p.cid,
-                                aid: data.data.aid
+                                aid: data.data.aid,
+                                owner: ownerName,
+                                pubdate: pubdate,
+                                collection: collectionTitle
                             }));
                         } else {
                              list.push({
                                  title: data.data.title,
                                  bvid: data.data.bvid,
                                  cid: data.data.cid,
-                                 aid: data.data.aid
-                             });
+                                 aid: data.data.aid,
+                                 owner: ownerName,
+                                 pubdate: pubdate,
+                                 collection: collectionTitle
+                            });
                         }
                         resolve(list);
 
@@ -818,10 +956,12 @@
                 const item = document.createElement('div');
                 item.className = 'bsd-video-item';
                 const safeTitle = v.title.replace(/[\\/:*?"<>|]/g, '_');
+                const safeOwner = (v.owner || '').replace(/"/g, '&quot;');
+                const safeCollection = (v.collection || '').replace(/"/g, '&quot;');
                 
                 item.innerHTML = `
                     <div class="bsd-video-status-col"></div>
-                    <input type="checkbox" data-cid="${v.cid}" data-bvid="${v.bvid}" data-title="${safeTitle}" data-index="${index + 1}">
+                    <input type="checkbox" data-cid="${v.cid}" data-bvid="${v.bvid}" data-title="${safeTitle}" data-index="${index + 1}" data-owner="${safeOwner}" data-pubdate="${v.pubdate}" data-collection="${safeCollection}">
                     <div class="bsd-video-index">${index + 1}</div>
                     <div class="bsd-video-title" title="${v.title}">${v.title}</div>
                 `;
@@ -924,6 +1064,9 @@
             const cid = el.dataset.cid;
             const bvid = el.dataset.bvid;
             const vidIndex = el.dataset.index;
+            const owner = el.dataset.owner;
+            const pubdate = el.dataset.pubdate;
+            const collection = el.dataset.collection;
             const row = el.parentElement;
             const statusCol = row.querySelector('.bsd-video-status-col');
             
@@ -931,37 +1074,91 @@
             if (statusCol) statusCol.innerText = '...';
             
             try {
-                const subUrl = await fetchSubtitleInfo(bvid, cid);
-                if (!subUrl) throw new Error('无 AI/中文字幕');
-                
-                const jsonBody = await downloadSubtitleJson(subUrl);
-                
-                if (!jsonBody || !jsonBody.body || !Array.isArray(jsonBody.body) || jsonBody.body.length === 0) {
-                    throw new Error('字幕内容为空');
+                let subUrl = null;
+                let jsonBody = null;
+                let errorMsg = null;
+
+                try {
+                    subUrl = await fetchSubtitleInfo(bvid, cid);
+                    if (!subUrl) {
+                        errorMsg = '无 AI/中文字幕';
+                    } else {
+                        jsonBody = await downloadSubtitleJson(subUrl);
+                        if (!jsonBody || !jsonBody.body || !Array.isArray(jsonBody.body) || jsonBody.body.length === 0) {
+                            errorMsg = '字幕内容为空';
+                        }
+                    }
+                } catch (e) {
+                    errorMsg = e.message;
+                }
+
+                if (errorMsg) {
+                    if (format === 'md') {
+                        // Fallback for MD: Generate Metadata-only MD
+                        jsonBody = { body: [] };
+                    } else {
+                        throw new Error(errorMsg);
+                    }
                 }
 
                 let content = '';
                 if (format === 'srt') content = jsonToSrt(jsonBody);
-                else if (format === 'txt' || format === 'md') content = jsonToTxt(jsonBody);
+                else if (format === 'txt') content = jsonToTxt(jsonBody);
+                else if (format === 'md') {
+                    content = jsonToMd(jsonBody, {
+                        title: title,
+                        owner: owner,
+                        pubdate: pubdate,
+                        bvid: bvid,
+                        collection: collection,
+                        subtitle_url: subUrl
+                    });
+                }
                 else if (format === 'lrc') content = jsonToLrc(jsonBody);
                 
                 let filename = title.replace(/[\\/:*?"<>|]/g, '_').trim();
-                if (filename.length > 80) filename = filename.substring(0, 80);
+                if (errorMsg && format === 'md') {
+                    filename = '下载失败';
+                }
+                if (filename.length > 50) filename = filename.substring(0, 50);
 
+                let safeOwner = (owner || 'Unknown').replace(/[\\/:*?"<>|]/g, '_').trim();
+                let safeCollection = (collection || '').replace(/[\\/:*?"<>|]/g, '_').trim();
+                
                 const date = new Date();
                 const mmdd = (date.getMonth() + 1).toString().padStart(2, '0') + date.getDate().toString().padStart(2, '0');
                 const hhmm = date.getHours().toString().padStart(2, '0') + date.getMinutes().toString().padStart(2, '0');
-                // v1.10: [序号]标题_MMDDHHmm
-                const finalName = `[${vidIndex}]${filename}_${mmdd}${hhmm}.${format}`;
+                
+                // v1.12: Author_Collection_Index_Title_MMDDHHmm
+                let finalName = '';
+                if (safeCollection) {
+                     finalName = `${safeOwner}_${safeCollection}_${vidIndex}_${filename}_${mmdd}${hhmm}.${format}`;
+                } else {
+                     finalName = `${safeOwner}_${vidIndex}_${filename}_${mmdd}${hhmm}.${format}`;
+                }
 
                 // 直接下载模式
                 await downloadDirectly(content, finalName);
-                logStatus(`√ 已下载: ${finalName}`);
+                
+                if (errorMsg && format === 'md') {
+                    logStatus(`❌ 下载失败 (已生成无字幕MD): ${finalName}`);
+                    failCount++;
+                    failedItems.push({index: vidIndex, title: title, reason: '无字幕 (已生成无字幕MD)'});
+                    
+                    if (statusCol) {
+                        statusCol.innerText = '❎';
+                        statusCol.title = '无字幕 (已生成无字幕MD)';
+                    }
+                    const titleEl = row.querySelector('.bsd-video-title');
+                    if (titleEl) titleEl.classList.add('failed');
+                } else {
+                    logStatus(`√ 已下载: ${finalName}`);
+                    successCount++;
+                    if (statusCol) statusCol.innerText = '✅';
+                }
+
                 // 直接下载模式下，稍微增加一点间隔，避免浏览器弹窗过多被拦截
                 await new Promise(r => setTimeout(r, 200));
-                
-                successCount++;
-                if (statusCol) statusCol.innerText = '✅';
                 
             } catch (err) {
                 console.error(`[BiliSub] ${title} 失败:`, err);

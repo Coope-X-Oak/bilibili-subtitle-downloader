@@ -1,6 +1,6 @@
 # Bilibili Subtitle Batch Downloader - B站AI字幕批量下载神器
 
-![Version](https://img.shields.io/badge/version-v1.07-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-v1.14.2-blue?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 ![Tampermonkey](https://img.shields.io/badge/Tampermonkey-Script-green?logo=tampermonkey&style=flat-square)
 
@@ -21,7 +21,10 @@
 
 ## ✨ 核心亮点 (Why Use This?)
 
-*   **📚 笔记党福音**：支持 **.md (Markdown)** 格式导出，下载后直接拖入 Obsidian/Notion，方便进行后续文本处理（计划后续推出相关的md批量处理工具，一键进行原子化，生成双链笔记）！
+*   **📚 笔记党福音 (v1.12 Enhanced)**：
+    *   **Markdown 增强**：导出的 `.md` 文件内置 **YAML Front Matter** 属性表，自动提取并记录 `title`、`date`、`author`、`collection`（合集名）及 `url`。
+    *   **Obsidian 友好**：拖入 Obsidian 后自动识别为文档属性，轻松构建知识库索引。
+    *   **语义化命名**：文件名格式升级为 `UP主_合集名_序号_标题_时间戳.md`，文件管理井井有条。
 *   **⚡ 极速批量下载**：自动获取当前所处的视频合集/列表/番剧，可按任意筛选规则，一键下载数百集字幕，无需手动重复操作（大批量操作务必关闭浏览器的“下载前询问每个文件的保存位置”设置，否则会弹出大量保存对话框。）。
 *   **🛡️ 稳定防风控**：
     *   内置 **WBI 签名算法**，完美解决 B 站接口鉴权问题（403 Forbidden）。
@@ -36,7 +39,7 @@
 
 #### 方式一：GitHub 直接安装（🔥 推荐）
 1.  确保您的浏览器已安装 **Tampermonkey** (篡改猴) 扩展。
-2.  👉 **[点击这里直接安装脚本](https://github.com/Cooper-X-Oak/bilibili-subtitle-downloader/raw/main/bilibili_subtitle_downloader.user.js?v=1.07)**
+2.  👉 **[点击这里直接安装脚本](https://github.com/Cooper-X-Oak/bilibili-subtitle-downloader/raw/main/bilibili_subtitle_downloader.user.js)**
     > *如果点击后显示代码而非安装界面，请复制链接地址，在 Tampermonkey 管理面板中点击 "工具" -> "从 URL 安装"。*
 
 #### 方式二：GreasyFork 安装
