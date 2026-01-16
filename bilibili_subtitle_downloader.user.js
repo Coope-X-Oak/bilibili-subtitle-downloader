@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili AI Subtitle Batch Downloader
 // @namespace    http://tampermonkey.net/
-// @version      1.07
+// @version      1.10
 // @description  批量下载B站视频合集/列表的AI中文字幕，支持MD/TXT/LRC/SRT格式，集成并发控制与重试机制。
 // @author       Cooper.X.Oak
 // @match        https://www.bilibili.com/video/*
@@ -26,7 +26,7 @@
 
 (function() {
     'use strict';
-    const VERSION = '1.07';
+    const VERSION = '1.10';
     
     // 配置项==========================================
     // 0. 内联依赖库 (FileSaver.js) - 解决 CDN 不稳定问题
@@ -225,9 +225,9 @@
         .bsd-video-item {
             display: flex;
             align-items: center;
-            padding: 1px 6px;
+            padding: 1px 2px;
             border-bottom: 1px solid #f0f0f0;
-            gap: 4px;
+            gap: 2px;
             min-height: 20px;
             transition: background 0.2s;
         }
@@ -248,6 +248,15 @@
             flex-shrink: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             font-variant-numeric: tabular-nums; /* 等宽数字，对齐更好 */
+        }
+        .bsd-video-status-col {
+            width: 16px;
+            text-align: center;
+            font-size: 12px;
+            flex-shrink: 0;
+            cursor: default;
+            margin: 0;
+            padding: 0;
         }
         .bsd-video-title {
             font-size: 12px;
@@ -292,7 +301,13 @@
             display: none !important;
         }
         .bsd-highlight {
-            background-color: #fffde7;
+            background-color: #e0f7fa; /* 筛选高亮色 */
+        }
+        .bsd-selected {
+            background-color: #fffde7 !important; /* 选中高亮色 */
+        }
+        .bsd-video-title.failed {
+            color: red !important; /* 失败标题标红 */
         }
     `;
 
@@ -332,6 +347,7 @@
                 <div class="bsd-filter-row">
                     <input type="text" class="bsd-filter-input" id="bsd-filter-input" placeholder="输入关键词 (空格分隔, OR匹配)">
                     <button class="bsd-filter-btn" id="bsd-filter-select-btn" title="选中所有符合当前筛选条件的视频">选中筛选结果</button>
+                    <button class="bsd-filter-btn" id="bsd-select-failed-btn" title="选中所有下载失败的视频">选中失败</button>
                 </div>
                 <div class="bsd-filter-stat" id="bsd-filter-stat"></div>
             </div>
@@ -390,9 +406,11 @@
         // 筛选逻辑绑定
         const filterInput = document.getElementById('bsd-filter-input');
         const selectMatchBtn = document.getElementById('bsd-filter-select-btn');
+        const selectFailedBtn = document.getElementById('bsd-select-failed-btn');
         
         filterInput.addEventListener('input', filterVideos);
         selectMatchBtn.addEventListener('click', selectMatchingVideos);
+        selectFailedBtn.addEventListener('click', selectFailedVideos);
         
         document.getElementById('bsd-select-all').addEventListener('change', (e) => {
             // 全选当前列表中的所有项 (v0.20: 不再受筛选影响，因为筛选不再隐藏)
@@ -468,6 +486,34 @@
         });
         updateSelectionCount();
         logStatus(`已选中 ${count} 个匹配项`);
+    }
+
+    function selectFailedVideos() {
+        const items = document.querySelectorAll('.bsd-video-item');
+        let count = 0;
+        
+        // 先取消所有选中
+        items.forEach(item => {
+            const cb = item.querySelector('input[type="checkbox"]');
+            if (cb) cb.checked = false;
+        });
+        
+        // 再选中失败项
+        items.forEach(item => {
+            const statusCol = item.querySelector('.bsd-video-status-col');
+            const cb = item.querySelector('input[type="checkbox"]');
+            if (statusCol && statusCol.innerText.includes('❎') && cb) {
+                cb.checked = true;
+                count++;
+            }
+        });
+        
+        if (count === 0) {
+            logStatus('没有发现下载失败的项目或已全部选中');
+        } else {
+            updateSelectionCount();
+            logStatus(`已选中 ${count} 个失败项`);
+        }
     }
 
     function formatTime(seconds) {
@@ -774,7 +820,8 @@
                 const safeTitle = v.title.replace(/[\\/:*?"<>|]/g, '_');
                 
                 item.innerHTML = `
-                    <input type="checkbox" data-cid="${v.cid}" data-bvid="${v.bvid}" data-title="${safeTitle}">
+                    <div class="bsd-video-status-col"></div>
+                    <input type="checkbox" data-cid="${v.cid}" data-bvid="${v.bvid}" data-title="${safeTitle}" data-index="${index + 1}">
                     <div class="bsd-video-index">${index + 1}</div>
                     <div class="bsd-video-title" title="${v.title}">${v.title}</div>
                 `;
@@ -793,9 +840,21 @@
     }
 
     function updateSelectionCount() {
-        const checked = document.querySelectorAll('.bsd-video-item input[type="checkbox"]:checked');
-        document.getElementById('bsd-count').innerText = `已选: ${checked.length}`;
-        document.getElementById('bsd-download-btn').disabled = checked.length === 0;
+        const checked = document.querySelectorAll('.bsd-video-item input:checked');
+        const count = checked.length;
+        document.getElementById('bsd-count').innerText = `已选: ${count}`;
+        document.getElementById('bsd-download-btn').disabled = count === 0;
+        
+        // 更新视觉状态 (选中背景色)
+        const allItems = document.querySelectorAll('.bsd-video-item');
+        allItems.forEach(item => {
+            const cb = item.querySelector('input[type="checkbox"]');
+            if (cb && cb.checked) {
+                item.classList.add('bsd-selected');
+            } else {
+                item.classList.remove('bsd-selected');
+            }
+        });
     }
 
     // ==========================================
@@ -847,6 +906,7 @@
         let successCount = 0;
         let failCount = 0;
         let processedCount = 0;
+        const failedItems = [];
         
         const updateProgress = () => {
             processedCount++;
@@ -863,8 +923,12 @@
             const title = el.dataset.title;
             const cid = el.dataset.cid;
             const bvid = el.dataset.bvid;
+            const vidIndex = el.dataset.index;
+            const row = el.parentElement;
+            const statusCol = row.querySelector('.bsd-video-status-col');
             
             logStatus(`[${index+1}/${checked.length}] 处理中: ${title.slice(0, 15)}...`);
+            if (statusCol) statusCol.innerText = '...';
             
             try {
                 const subUrl = await fetchSubtitleInfo(bvid, cid);
@@ -887,7 +951,8 @@
                 const date = new Date();
                 const mmdd = (date.getMonth() + 1).toString().padStart(2, '0') + date.getDate().toString().padStart(2, '0');
                 const hhmm = date.getHours().toString().padStart(2, '0') + date.getMinutes().toString().padStart(2, '0');
-                const finalName = `[${mmdd}${hhmm}]${filename}.${format}`;
+                // v1.10: [序号]标题_MMDDHHmm
+                const finalName = `[${vidIndex}]${filename}_${mmdd}${hhmm}.${format}`;
 
                 // 直接下载模式
                 await downloadDirectly(content, finalName);
@@ -896,12 +961,20 @@
                 await new Promise(r => setTimeout(r, 200));
                 
                 successCount++;
+                if (statusCol) statusCol.innerText = '✅';
                 
             } catch (err) {
                 console.error(`[BiliSub] ${title} 失败:`, err);
                 const errMsg = err.message || '未知错误';
                 logStatus(`× 跳过: ${errMsg.slice(0, 20)}...`);
                 failCount++;
+                failedItems.push({index: vidIndex, title: title, reason: errMsg});
+                if (statusCol) {
+                    statusCol.innerText = '❎';
+                    statusCol.title = errMsg;
+                }
+                const titleEl = row.querySelector('.bsd-video-title');
+                if (titleEl) titleEl.classList.add('failed');
             } finally {
                 updateProgress();
             }
@@ -935,6 +1008,15 @@
         } else {
             logStatus(`任务结束，未下载到任何有效字幕 (耗时:${duration}s)。`);
         }
+
+        if (failedItems.length > 0) {
+            logStatus('--- 失败详情 ---', true);
+            failedItems.forEach(item => {
+                logStatus(`[序号${item.index}] ${item.reason}`, true);
+            });
+            const failedIndices = failedItems.map(i => i.index).join(', ');
+            logStatus(`失败视频序号: ${failedIndices}`, true);
+        }
         
         btn.disabled = false;
         btn.innerText = '开始下载';
@@ -945,9 +1027,13 @@
     // 5. 辅助功能 (Helpers)
     // ==========================================
     
-    function logStatus(text) {
+    function logStatus(text, append = false) {
         const el = document.getElementById('bsd-status-text');
-        el.innerText = text;
+        if (append) {
+            el.innerText += '\n' + text;
+        } else {
+            el.innerText = text;
+        }
         el.scrollTop = el.scrollHeight;
         console.log('[BiliSub]', text);
     }
