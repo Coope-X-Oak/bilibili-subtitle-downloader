@@ -125,7 +125,7 @@ flowchart TD
     ModeCheck -- 当前视频/合集 --> FetchBasic[获取当前页面视频信息]:::logic
     ModeCheck -- UP主所有视频 --> FetchUp[获取UP主空间视频列表]:::logic
     
-    subgraph “依赖特权的操作 (UserScript 提供)”
+    subgraph PrivilegeOps ["依赖特权的操作 (UserScript 提供)"]
         FetchBasic -->|GM_xmlhttpRequest| BiliAPI[B站 API]
         FetchUp -->|GM_xmlhttpRequest + WBI签名| BiliAPI
         
@@ -142,7 +142,7 @@ flowchart TD
     
     ClickDownload --> BatchQueue[初始化一个处理队列]:::logic
     
-    subgraph “批量处理流水线 (并发数限制为3)”
+    subgraph BatchPipeline ["批量处理流水线 (并发数限制为3)"]
         BatchQueue -->|从队列取任务| FetchSubInfo[获取单个视频的字幕信息]:::privilege
         FetchSubInfo -->|GM_xmlhttpRequest| BiliAPI
         
@@ -162,7 +162,7 @@ flowchart TD
 
     %% 图例说明
     subgraph Legend
-        PNode[“黄色节点: 依赖UserScript特权<br>突破浏览器常规限制”]:::privilege
+        PNode["黄色节点: 依赖UserScript特权<br>突破浏览器常规限制"]:::privilege
     end
 ```
 
